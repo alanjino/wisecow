@@ -59,40 +59,34 @@ jobs:
           push: true
 
   deploy:
+  
     name: Deploy to Kubernetes
     runs-on: ubuntu-latest
     needs: build
-    env:
-      KUBECONFIG_B64: ${{ secrets.KUBECONFIG }}
-    if: ${{ env.KUBECONFIG_B64 != '' }}
     steps:
+      - name: Check if kubeconfig is set
+        if: ${{ secrets.KUBECONFIG != '' }}
+        run: echo "Kubeconfig secret found"
+
+      - name: Exit if no kubeconfig
+        if: ${{ secrets.KUBECONFIG == '' }}
+        run: |
+          echo "No kubeconfig secret, skipping deployment"
+          exit 0
+
       - name: Checkout repo
         uses: actions/checkout@v3
+        if: ${{ secrets.KUBECONFIG != '' }}
 
       - name: Install kubectl
         uses: azure/setup-kubectl@v3
         with:
           version: 'latest'
+        if: ${{ secrets.KUBECONFIG != '' }}
 
       - name: Restore kubeconfig
+        if: ${{ secrets.KUBECONFIG != '' }}
         run: |
-          echo "$KUBECONFIG_B64" | base64 --decode > kubeconfig
+          echo "${{ secrets.KUBECONFIG }}" | base64 --decode > kubeconfig
           export KUBECONFIG=$(pwd)/kubeconfig
           kubectl version --client
-
-      - name: Create namespace (if not exists)
-        run: |
-          export KUBECONFIG=$(pwd)/kubeconfig
-          kubectl apply -f k8s/namespace.yaml
-
-      - name: Apply Kubernetes manifests
-        run: |
-          export KUBECONFIG=$(pwd)/kubeconfig
-          kubectl apply -f k8s/service.yaml -n wisecow
-          kubectl apply -f k8s/ingress.yaml -n wisecow || true
-          kubectl apply -f k8s/deployment.yaml -n wisecow
-
-      - name: Update Deployment with latest image
-        run: |
-          export KUBECONFIG=$(pwd)/kubeconfig
-          kubectl -n wisecow set image deployment/wisecow wisecow=${{ env.REGISTRY }}/${{ github.repository }}:latest
