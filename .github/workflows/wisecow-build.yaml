@@ -57,34 +57,54 @@ jobs:
           tags: ${{ env.REGISTRY }}/${{ github.repository }}:latest
           labels: ${{ steps.metadata.outputs.labels }}
           push: true
-
   deploy:
-    name: Deploy to Kubernetes
     runs-on: self-hosted
     needs: build
     steps:
-      - name: Checkout repo
+      - name: Checkout code
         uses: actions/checkout@v3
 
-      - name: Install kubectl
-        uses: azure/setup-kubectl@v3
-        with:
-          version: 'latest'
-
-      - name: Restore kubeconfig
+      - name: Verify cluster access
         run: |
-          echo "$KUBECONFIG_B64" | base64 --decode > kubeconfig
-          export KUBECONFIG=$(pwd)/kubeconfig
-          kubectl version --client
+          kubectl cluster-info
+          kubectl get nodes
 
-      - name: Apply Kubernetes manifests
+      - name: Apply manifests
         run: |
-          export KUBECONFIG=$(pwd)/kubeconfig
           kubectl apply -f k8s-manifest/deployment.yaml -n wisecow --validate=false
           kubectl apply -f k8s-manifest/service.yaml -n wisecow --validate=false
           kubectl apply -f k8s-manifest/ingress.yaml -n wisecow --validate=false 
-         
-      - name: Update Deployment with latest image
-        run: |
-          export KUBECONFIG=$(pwd)/kubeconfig
           kubectl -n wisecow set image deployment/wisecow wisecow=${{ env.REGISTRY }}/${{ github.repository }}:latest
+          kubectl rollout status deployment/wisecow -n wisecow
+          
+
+  # deploy:
+  #   name: Deploy to Kubernetes
+  #   runs-on: self-hosted
+  #   needs: build
+  #   steps:
+  #     - name: Checkout repo
+  #       uses: actions/checkout@v3
+
+  #     - name: Install kubectl
+  #       uses: azure/setup-kubectl@v3
+  #       with:
+  #         version: 'latest'
+
+  #     - name: Restore kubeconfig
+  #       run: |
+  #         echo "$KUBECONFIG_B64" | base64 --decode > kubeconfig
+  #         export KUBECONFIG=$(pwd)/kubeconfig
+  #         kubectl version --client
+
+  #     - name: Apply Kubernetes manifests
+  #       run: |
+  #         export KUBECONFIG=$(pwd)/kubeconfig
+  #         kubectl apply -f k8s-manifest/deployment.yaml -n wisecow --validate=false
+  #         kubectl apply -f k8s-manifest/service.yaml -n wisecow --validate=false
+  #         kubectl apply -f k8s-manifest/ingress.yaml -n wisecow --validate=false 
+         
+  #     - name: Update Deployment with latest image
+  #       run: |
+  #         export KUBECONFIG=$(pwd)/kubeconfig
+  #         kubectl -n wisecow set image deployment/wisecow wisecow=${{ env.REGISTRY }}/${{ github.repository }}:latest
