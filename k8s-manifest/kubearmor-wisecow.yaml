@@ -1,0 +1,33 @@
+apiVersion: security.kubearmor.com/v1
+kind: KubeArmorPolicy
+metadata:
+  name: wisecow-policy
+  namespace: wisecow
+spec:
+  selector:
+    matchLabels:
+      app: wisecow
+
+  # Process restrictions
+  process:
+    matchPaths:
+      # Allow only the app binary/script
+      - path: /app/wisecow
+        action: Allow
+      # Deny all other execution
+      - path: /bin/bash
+        action: Block
+      - path: /usr/bin/*
+        action: Block
+
+  # File access restrictions
+  file:
+    matchPaths:
+      # Allow read/write inside /app
+      - path: /app/*
+        action: Allow
+      # Deny write access anywhere else
+      - path: /**
+        action: Block
+
+  
