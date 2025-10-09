@@ -77,11 +77,6 @@ jobs:
           export KUBECONFIG=$(pwd)/kubeconfig
           kubectl version --client
 
-      - name: Create namespace (if not exists)
-        run: |
-          export KUBECONFIG=$(pwd)/kubeconfig
-          kubectl apply -f k8s/namespace.yaml
-
       - name: Apply Kubernetes manifests
         run: |
           export KUBECONFIG=$(pwd)/kubeconfig
