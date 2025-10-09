@@ -74,8 +74,8 @@ jobs:
           kubectl apply -f k8s-manifest/deployment.yaml -n wisecow --validate=false
           kubectl apply -f k8s-manifest/service.yaml -n wisecow --validate=false
           kubectl apply -f k8s-manifest/ingress.yaml -n wisecow --validate=false 
-          kubectl -n wisecow set image deployment/wisecow wisecow=${{ env.REGISTRY }}/${{ github.repository }}:latest
-          kubectl rollout status deployment/wisecow -n wisecow
+          kubectl -n wisecow set image deployment/wisecow-deployment wisecow=${{ env.REGISTRY }}/${{ github.repository }}:latest
+          kubectl rollout status deployment/wisecow-deployment -n wisecow
           
 
   # deploy:
