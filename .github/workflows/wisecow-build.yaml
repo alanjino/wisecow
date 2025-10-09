@@ -80,9 +80,9 @@ jobs:
       - name: Apply Kubernetes manifests
         run: |
           export KUBECONFIG=$(pwd)/kubeconfig
-          kubectl apply -f k8s/service.yaml -n wisecow
-          kubectl apply -f k8s/ingress.yaml -n wisecow || true
-          kubectl apply -f k8s/deployment.yaml -n wisecow
+          kubectl apply -f k8s-manifest/service.yaml -n wisecow
+          kubectl apply -f k8s-manifest/ingress.yaml -n wisecow || true
+          kubectl apply -f k8s-manifest/deployment.yaml -n wisecow
 
       - name: Update Deployment with latest image
         run: |
